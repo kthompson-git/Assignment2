@@ -85,10 +85,10 @@ void sortVectors(std::vector<char> &sym, std::vector<int> &cnt)
   return;
 }
 
-// creates the thread that will call the server
-void createThread(std::string fileIn, int i, std::string *memArray)
+void serverCall(std::string *mem1, std::string *mem2)
 {
-  
+	
+	return;
 }
 
 // remove specified character from string
@@ -104,14 +104,14 @@ void removeChar(char sym, std::string &str)
   return;
 }
 
-// compresses symbols to binary
+// creates threads to compress symbols to binary
 void compression(std::string &fileIn, std::vector<char> &sym, std::string *memArray)
 {
   if (fileIn.empty()) // exit function if string is empty
     return;
   for (int i = 0; i < sym.size(); i++)
   {
-    createThread(fileIn, i, memArray);
+    std::thread tid(serverCall, memArray[i], memArray[i++]);	
     removeChar(sym[i], fileIn); // remove character that was coded by child process
   }
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
-HOST = "127.0.0.1"
-PORT = "6666"
+HOST="127.0.0.1"
+PORT="6666"
 
 ./server.exe $PORT
 echo
