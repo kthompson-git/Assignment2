@@ -88,7 +88,7 @@ void sortVectors(std::vector<char> &sym, std::vector<int> &cnt)
 // creates the thread that will call the server
 void createThread(std::string fileIn, int i, std::string *memArray)
 {
-
+  
 }
 
 // remove specified character from string
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
   // check if correct amount of arguments passed
   if (argc != 3)
   {
-    fprintf(stderr,"ERROR, insufficient arguments.\nUsage: %s <hostname> <port>\n", argv[0]);
+    printf("ERROR, insufficient arguments.\nUsage: %s <hostname> <port>\n", argv[0]);
     exit(0);
   }
   
