@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
   // check if correct amount of arguments passed
   if (argc != 3)
   {
-    printf("ERROR, insufficient arguments.\nUsage: %s <hostname> <port>\n", argv[0]);
+    fprintf(stderr,"ERROR, insufficient arguments.\nUsage: %s <hostname> <port>\n", argv[0]);
     exit(0);
   }
   

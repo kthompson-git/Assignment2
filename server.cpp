@@ -1,10 +1,16 @@
-#include <bits/stdc++.h>  
+#include<bits/stdc++.h>  
 #include <iostream>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+void error(char *msg)
+{
+    perror(msg);
+    exit(1);
+}
 
 int main(int argc, char *argv[]) 
 {
@@ -15,7 +21,7 @@ int main(int argc, char *argv[])
   // check if correct amount of arguments passed
   if (argc != 2)
   {
-    printf("ERROR, insufficient arguments.\nUsage: %s <port>\n", argv[0]);
+    fprintf(stderr,"ERROR, insufficient arguments.\nUsage: %s <port>\n", argv[0]);
     exit(1);
   }
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
