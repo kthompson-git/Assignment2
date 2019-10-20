@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/wait.h>
 #include <pthread.h>
 
 struct Data
@@ -180,24 +181,25 @@ std::string newlineToEOL(std::string &fileIn)
 // send message to server and receive code
 void *serverCall(void *headRef)
 {
-  std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
+  // std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
   struct Data *head = (struct Data *) headRef;
+  std::cout << "thread num:\t" << head->index << std::endl;
   while (true)
   {
     if (head->flag == 0)
     {
-      std::cout << "\nHead created:\t" << &head << std::endl;
-      std::cout << "index:\t" << head->index << std::endl;
-      std::cout << "flag:\t" << head->flag << std::endl;
-      std::cout << "size:\t" << head->size << std::endl;
-      std::cout << "char:\t" << head->sym << std::endl;
-      std::cout << "msg:\t" << head->message << std::endl;
+      // std::cout << "\nHead created:\t" << &head << std::endl;
+      // std::cout << "index:\t" << head->index << std::endl;
+      // std::cout << "flag:\t" << head->flag << std::endl;
+      // std::cout << "size:\t" << head->size << std::endl;
+      // std::cout << "char:\t" << head->sym << std::endl;
+      // std::cout << "msg:\t" << head->message << std::endl;
       std::string code = generateCode(head->message, head->sym);
       for (int i = 0; i < head->size; i++)
       {
         head->code[i] = code[i];
       }
-      std::cout << "code:\t" << head->code << std::endl;
+      // std::cout << "code:\t" << head->code << std::endl;
       head->flag = 1;
       return NULL;
     }
@@ -208,16 +210,12 @@ void *serverCall(void *headRef)
       head = head->next;
     }
   }
-  // exit(0);
-
-
-	return NULL;
 }
 
 // creates threads to compress symbols to binary
 void populateList(std::string &fileIn, std::vector<char> &sym, Data **head)
 {
-  std::cout << "\nHead passed to populate:\t" << &head << std::endl;
+  // std::cout << "\nHead passed to populate:\t" << &head << std::endl;
 
   if (fileIn.empty()) // exit function if string is empty
     return;
@@ -227,18 +225,18 @@ void populateList(std::string &fileIn, std::vector<char> &sym, Data **head)
     removeChar(sym[i], fileIn); 
   }
 
-  std::cout << "\nPrinting populate list\n";
-  Data *temp = *head;
-  for (int i = 0; i < sym.size(); i++)
-  {
-    std::cout << "index:\t" << temp->index << std::endl;
-    std::cout << "flag:\t" << temp->flag << std::endl;
-    std::cout << "size:\t" << temp->size << std::endl;
-    std::cout << "char:\t" << temp->sym << std::endl;
-    std::cout << "msg:\t" << temp->message << std::endl;
-    std::cout << "code:\t" << temp->code << std::endl;
-    temp = temp->next;
-  }
+  // std::cout << "\nPrinting populate list\n";
+  // Data *temp = *head;
+  // for (int i = 0; i < sym.size(); i++)
+  // {
+  //   std::cout << "index:\t" << temp->index << std::endl;
+  //   std::cout << "flag:\t" << temp->flag << std::endl;
+  //   std::cout << "size:\t" << temp->size << std::endl;
+  //   std::cout << "char:\t" << temp->sym << std::endl;
+  //   std::cout << "msg:\t" << temp->message << std::endl;
+  //   std::cout << "code:\t" << temp->code << std::endl;
+  //   temp = temp->next;
+  // }
   return;
 }
 
@@ -328,6 +326,7 @@ int main(int argc, char *argv[])
     }
   }
   pthread_exit(NULL);
+  wait(1);
 
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
