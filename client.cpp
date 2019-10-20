@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
   }
+  pthread_exit(NULL);
 
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
