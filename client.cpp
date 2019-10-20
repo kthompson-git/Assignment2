@@ -176,25 +176,26 @@ void *serverCall(void *headRef)
   {
     if (head->flag == 0)
     {
-      //  std::cout << "\nHead created:\t" << &head << std::endl;
-      //  std::cout << "index:\t" << head->index << std::endl;
-      //  std::cout << "flag:\t" << head->flag << std::endl;
-      //  std::cout << "size:\t" << head->size << std::endl;
-      //  std::cout << "char:\t" << head->sym << std::endl;
-      //  std::cout << "msg:\t" << head->message << std::endl;
+      head->flag = 1;
+        //std::cout << "\nHead created:\t" << &head << std::endl;
+        //std::cout << "index:\t" << head->index << std::endl;
+        //std::cout << "flag:\t" << head->flag << std::endl;
+        //std::cout << "size:\t" << head->size << std::endl;
+        //std::cout << "char:\t" << head->sym << std::endl;
+        //std::cout << "msg:\t" << head->message << std::endl;
       std::string code = generateCode(head->message, head->sym);
       for (int i = 0; i < head->size; i++)
       {
         head->code[i] = code[i];
       }
-      //  std::cout << "code:\t" << head->code << std::endl;
-      head->flag = 1;
+       // std::cout << "code:\t" << head->code << std::endl << std::endl;
       return NULL;
     }
     else if (head->flag == 1)
     {
       if (head->next == NULL)
         return NULL;
+      //std::cout << "\nmoving to next node\n";
       head = head->next;
     }
   }
@@ -326,8 +327,8 @@ int main(int argc, char *argv[])
       std::cout << "Error:unable to join thread" << std::endl;
       exit(-1);
     }
-    // std::cout << "Main: completed thread id :" << i ;
-    // std::cout << "  exiting with status :" << status << std::endl;
+     //std::cout << "Main: completed thread id :" << i ;
+     //std::cout << "  exiting with status :" << status << std::endl;
    }
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
