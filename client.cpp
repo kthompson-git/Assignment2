@@ -2,7 +2,17 @@
 #include <iostream>
 #include <unistd.h>
 #include <stdio.h>
-#include <thread>
+// #include <pthread.h>
+
+struct Data
+{
+	public:
+    int index;
+    int flag;
+    char sym;
+    std::string message;
+    std::string code;
+};
 
 // check if character in string is duplicated
 bool duplicate(int index, std::string &fileIn)
@@ -85,12 +95,6 @@ void sortVectors(std::vector<char> &sym, std::vector<int> &cnt)
   return;
 }
 
-void serverCall(std::string *mem1, std::string *mem2)
-{
-	
-	return;
-}
-
 // remove specified character from string
 void removeChar(char sym, std::string &str)
 {
@@ -104,16 +108,116 @@ void removeChar(char sym, std::string &str)
   return;
 }
 
+std::string generateCode (std::string fileIn, char sym)
+{
+  std::string code;
+  for (int i = 0; i < fileIn.length(); i++)
+  {
+    if (fileIn[i] == sym)
+      code.append("1");
+    else
+      code.append("0");
+  }
+  return code;
+}
+
+// changes all newline characters to <EOL>
+std::string newlineToEOL(std::string &fileIn)
+{
+  std::string temp;
+  for (int i = 0; i < fileIn.length(); i++)
+  {
+    if (fileIn[i] == '\n')
+      temp = temp + "<EOL>";
+    else
+      temp.push_back(fileIn[i]);
+  }
+  return temp;
+}
+
+// send message to server and receive code
+void *serverCall(void *listRef)
+{
+  struct Data *list = (struct Data *) listRef;
+  // std::cout << "index:\t" << list->index << std::endl;
+  // std::cout << "flag:\t" << list->flag << std::endl;
+  // std::cout << "char:\t" << list->sym << std::endl;
+  // std::cout << "msg:\t" << list->message << std::endl;
+  // list->code = generateCode(list->message, list->sym);
+  // std::cout << "code:\t" << list->code << std::endl;
+
+
+	return NULL;
+}
+
 // creates threads to compress symbols to binary
-void compression(std::string &fileIn, std::vector<char> &sym, std::string *memArray)
+void compression(std::string &fileIn, std::vector<char> &sym, Data *list)
 {
   if (fileIn.empty()) // exit function if string is empty
     return;
+  // pthread_t tid[sym.size()];
   for (int i = 0; i < sym.size(); i++)
   {
-    std::thread tid(serverCall, memArray[i], memArray[i++]);	
+    list[i].index = i;
+    list[i].flag = 0;
+    list[i].sym = sym[i];
+    list[i].message = fileIn;
+    list[i].code = fileIn;
+    
+    // serverCall((void *)&list[i]);
+    
+    // create thread
+    if (pthread_create(&tid[i], NULL, serverCall, (void *) &list[i]))
+    {
+      fprintf(stderr, "Error creating thread.\n");
+      exit(1);
+    }
+
+      
+    	
     removeChar(sym[i], fileIn); // remove character that was coded by child process
   }
+  pthread_exit(NULL);
+}
+
+// prints the vectors
+void printVectors(std::vector<char> &sym, std::vector<int> &cnt)
+{
+  for (int i = 0; i < sym.size(); i++)
+  {
+    if (sym[i] == '\n') // special case for newline character
+      std::cout << "<EOL> frequency = " << cnt[i] << std::endl;
+    else
+      std::cout << sym[i] << " frequency = " << cnt[i] << std::endl;
+  }
+  return;
+}
+
+// print message and code from linked list
+void printList(std::vector<char> sym, Data *list)
+{
+  Data *node = NULL;
+  for (int i = 0; i < sym.size(); i++)
+  {     
+    if (i == 0)
+      std::cout << "Original Message:\t" << list[i].message << std::endl;
+    else
+      std::cout << "Remaining Message:\t" << list[i].message << std::endl;
+
+    if (sym[i] == '\n')
+      std::cout << "Symbol <EOL> code:\t" << list[i].code << std::endl;
+    else
+      std::cout << "Symbol " << sym[i] << " code:\t\t" << list[i].code << std::endl;
+  }
+  return;
+}
+
+// calls printing functions
+void printCompression(std::vector<char> &sym, std::vector<int> &cnt, Data *list)
+{
+  printVectors(sym, cnt);
+  printList(sym, list);
+  return;
 }
 
 int main(int argc, char *argv[]) 
@@ -139,11 +243,20 @@ int main(int argc, char *argv[])
   // sort vectors
   sortVectors(symbol, count);
 
-  // create array for thread access
-  std::string memArray[(symbol.size()*2)];
+  // start linked list for data
+  // static struct Data *head = NULL;
+  // std::cout << "Head address 1:\t" << &head << std::endl;
+  // std::cout << "Head address 1:\t" << head << std::endl;
+  struct Data list[symbol.size()];
 
   // perform symbol compression
-  compression(fileIn, symbol, memArray);
+  std::cout << "compression" << std::endl;
+  compression(fileIn, symbol, list);
+
+  // print compression steps
+  std::cout << "print compression" << std::endl;
+  printCompression(symbol, count, list);
+
 
   return 0;
 }

@@ -2,7 +2,7 @@
 HOST="127.0.0.1"
 PORT="6666"
 
-./server.exe $PORT
+# ./server.exe $PORT
 echo
 echo "Test 1"
 ./client.exe $HOST $PORT < test1.txt
