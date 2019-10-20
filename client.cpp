@@ -3,6 +3,13 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
+
+unsigned int portNum;
+std::string ipAddress;
 
 struct Data
 {
@@ -184,6 +191,42 @@ void *serverCall(void *headRef)
         //std::cout << "char:\t" << head->sym << std::endl;
         //std::cout << "msg:\t" << head->message << std::endl;
       std::string code = generateCode(head->message, head->sym);
+      
+      int sockfd, n;
+      struct sockaddr_in serv_addr;
+      struct hostent *server;
+      char *buffer;
+
+      sockfd = socket(AF_INET, SOCK_STREAM, 0);
+      if (sockfd < 0) 
+        error("ERROR opening socket");
+      server = gethostbyname(ipAddress);
+      if (server == NULL)
+      {
+        fprintf(stderr,"ERROR, no such host\n");
+        exit(0);
+      }
+
+      bzero((char *) &serv_addr, sizeof(serv_addr));
+      serv_addr.sin_family = AF_INET;
+      bcopy((char *)server->h_addr, 
+          (char *)&serv_addr.sin_addr.s_addr,
+          server->h_length);
+      serv_addr.sin_port = htons(portNum);
+      if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
+        error("ERROR connecting");
+      bzero(buffer, head->size + 1);
+      buffer = head->sym + head->message;
+      n = write(sockfd, buffer, strlen(buffer));
+      if (n < 0) 
+          error("ERROR writing to socket");
+      bzero(buffer, head->size);
+      n = read(sockfd,buffer,255);
+      if (n < 0) 
+          error("ERROR reading from socket");
+      printf("%s\n",buffer);
+
+
       for (int i = 0; i < head->size; i++)
       {
         head->code[i] = code[i];
@@ -279,6 +322,8 @@ int main(int argc, char *argv[])
     fprintf(stderr,"ERROR, insufficient arguments.\nUsage: %s <hostname> <port>\n", argv[0]);
     exit(0);
   }
+  portNum = atoi(argv[2]);
+  ipAddress = argv[1];
   
   // string for file input
   std::string fileIn; 
@@ -304,32 +349,32 @@ int main(int argc, char *argv[])
   // std::cout << "compression" << std::endl;
   populateList(fileIn, symbol, &head);
 
-  // create thread
-  pthread_t tid[symbol.size()];
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
-  void *status;
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  for (int i = 0; i < symbol.size(); i++)
-  {
-    if (pthread_create(&tid[i], NULL, serverCall, head))
-    {
-      fprintf(stderr, "Error creating thread.\n");
-      exit(1);
-    }
-    //sleep(1);
-  }
-  pthread_attr_destroy(&attr);
-  for (int i = 0; i < symbol.size(); i++ )
-  {
-    if (pthread_join(tid[i], &status)) 
-    {
-      std::cout << "Error:unable to join thread" << std::endl;
-      exit(-1);
-    }
-     //std::cout << "Main: completed thread id :" << i ;
-     //std::cout << "  exiting with status :" << status << std::endl;
-   }
+  // // create thread
+  // pthread_t tid[symbol.size()];
+  // pthread_attr_t attr;
+  // pthread_attr_init(&attr);
+  // void *status;
+  // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+  // for (int i = 0; i < symbol.size(); i++)
+  // {
+  //   if (pthread_create(&tid[i], NULL, serverCall, head))
+  //   {
+  //     fprintf(stderr, "Error creating thread.\n");
+  //     exit(1);
+  //   }
+  //   //sleep(1);
+  // }
+  // pthread_attr_destroy(&attr);
+  // for (int i = 0; i < symbol.size(); i++ )
+  // {
+  //   if (pthread_join(tid[i], &status)) 
+  //   {
+  //     std::cout << "Error:unable to join thread" << std::endl;
+  //     exit(-1);
+  //   }
+  //    //std::cout << "Main: completed thread id :" << i ;
+  //    //std::cout << "  exiting with status :" << status << std::endl;
+  //  }
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
   // std::cout << "Head after populate:\t" << head << std::endl;
