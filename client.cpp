@@ -184,43 +184,50 @@ void *serverCall(void *headRef)
     if (head->flag == 0)
     {
       head->flag = 1;
-        //std::cout << "\nHead created:\t" << &head << std::endl;
-        //std::cout << "index:\t" << head->index << std::endl;
-        //std::cout << "flag:\t" << head->flag << std::endl;
-        //std::cout << "size:\t" << head->size << std::endl;
-        //std::cout << "char:\t" << head->sym << std::endl;
-        //std::cout << "msg:\t" << head->message << std::endl;
+        std::cout << "\nHead created:\t" << &head << std::endl;
+        std::cout << "index:\t" << head->index << std::endl;
+        std::cout << "flag:\t" << head->flag << std::endl;
+        std::cout << "size:\t" << head->size << std::endl;
+        std::cout << "char:\t" << head->sym << std::endl;
+        std::cout << "msg:\t" << head->message << std::endl;
       std::string code = generateCode(head->message, head->sym);
-      
+      std::cout << "\n\nInitializing variables\n";
       int sockfd, n;
-      struct sockaddr_in serv_addr = new sockaddr_in();
-      struct hostent *server = new hostent();
+      struct sockaddr_in serv_addr;
+      struct hostent *server;
       char *buffer;
-
+      std::cout << "Creating socket\n";
       sockfd = socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd < 0) 
         std::cout << "ERROR opening socket\n";
+      std::cout << "Setting host name\n";
       server = gethostbyname(ipAddress);
       if (server == NULL)
       {
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
       }
-
+      std::cout << "Setting serv_addr fields\n";
       bzero((char *) &serv_addr, sizeof(serv_addr));
       serv_addr.sin_family = AF_INET;
       bcopy((char *)server->h_addr, 
           (char *)&serv_addr.sin_addr.s_addr,
           server->h_length);
       serv_addr.sin_port = htons(portNum);
+      std::cout << "Establishing connection to server\n";
       if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
         std::cout << "ERROR connecting\n";
+      std::cout << "Setting buffer size\n";
       bzero(buffer, head->size + 1);
+      std::cout << "Added character and message into buffer\n";
       buffer = head->sym + head->message;
+      std::cout << "Buffer:\t" << buffer << std::endl;
+      std::cout << "Writing message to socket\n";
       n = write(sockfd, buffer, strlen(buffer));
       if (n < 0) 
           std::cout << "ERROR writing to socket\n";
       bzero(buffer, head->size);
+      std::cout << "Reading message from socket\n";
       n = read(sockfd,buffer,255);
       if (n < 0) 
           std::cout << "ERROR reading from socket\n";
