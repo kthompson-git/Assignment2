@@ -331,7 +331,10 @@ int main(int argc, char *argv[])
   }
   portNum = atoi(argv[2]);
   ipAddress = argv[1];
-  
+
+  std::cout << "Port:\t" << portNum << std::endl;
+  std::cout << "IP:\t" << ipAddress << std::endl;
+
   // string for file input
   std::string fileIn; 
   std::getline(std::cin, fileIn, '\0');
@@ -353,35 +356,35 @@ int main(int argc, char *argv[])
   // std::cout << "Head init next:\t" << &head->next << std::endl;
 
   // perform symbol compression
-  // std::cout << "compression" << std::endl;
+  std::cout << "populate list" << std::endl;
   populateList(fileIn, symbol, &head);
 
   // // create thread
-  // pthread_t tid[symbol.size()];
-  // pthread_attr_t attr;
-  // pthread_attr_init(&attr);
-  // void *status;
-  // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  // for (int i = 0; i < symbol.size(); i++)
-  // {
-  //   if (pthread_create(&tid[i], NULL, serverCall, head))
-  //   {
-  //     fprintf(stderr, "Error creating thread.\n");
-  //     exit(1);
-  //   }
-  //   //sleep(1);
-  // }
-  // pthread_attr_destroy(&attr);
-  // for (int i = 0; i < symbol.size(); i++ )
-  // {
-  //   if (pthread_join(tid[i], &status)) 
-  //   {
-  //     std::cout << "Error:unable to join thread" << std::endl;
-  //     exit(-1);
-  //   }
-  //    //std::cout << "Main: completed thread id :" << i ;
-  //    //std::cout << "  exiting with status :" << status << std::endl;
-  //  }
+  pthread_t tid[symbol.size()];
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  void *status;
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+  for (int i = 0; i < symbol.size(); i++)
+  {
+    if (pthread_create(&tid[i], NULL, serverCall, head))
+    {
+      fprintf(stderr, "Error creating thread.\n");
+      exit(1);
+    }
+    //sleep(1);
+  }
+  pthread_attr_destroy(&attr);
+  for (int i = 0; i < symbol.size(); i++ )
+  {
+    if (pthread_join(tid[i], &status)) 
+    {
+      std::cout << "Error:unable to join thread" << std::endl;
+      exit(-1);
+    }
+     //std::cout << "Main: completed thread id :" << i ;
+     //std::cout << "  exiting with status :" << status << std::endl;
+   }
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
   // std::cout << "Head after populate:\t" << head << std::endl;
