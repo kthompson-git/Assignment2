@@ -2,17 +2,59 @@
 #include <iostream>
 #include <unistd.h>
 #include <stdio.h>
-// #include <pthread.h>
+#include <pthread.h>
 
 struct Data
 {
 	public:
     int index;
     int flag;
+    int size;
     char sym;
-    std::string message;
-    std::string code;
+    char message[1000];
+    // std::string message;
+    char code[1000];
+    // std::string code;
+    Data *next;
 };
+
+void append(Data** headRef, int i, int flag, int size, char sym, std::string msg)  
+{  
+    std::cout << "In append\n";
+    Data *newNode = new Data(); 
+  
+    Data *last = *headRef; 
+  
+    newNode->index = i; 
+    newNode->flag = flag;
+    newNode->size = size;
+    newNode->sym = sym;
+    for (int j = 0; j < size; j++)
+    {
+      newNode->message[j] = msg[j];
+      newNode->code[j] = msg[j]; 
+    }
+    newNode->next = NULL; 
+
+    // std::cout << "index:\t" << newNode->index << std::endl;
+    // std::cout << "flag:\t" << newNode->flag << std::endl;
+    // std::cout << "size:\t" << newNode->size << std::endl;
+    // std::cout << "char:\t" << newNode->sym << std::endl;
+    // std::cout << "msg:\t" << newNode->message << std::endl; 
+    // std::cout << "code:\t" << newNode->code << std::endl;
+
+    if (*headRef == NULL)  
+    {  
+      *headRef = newNode; 
+      return;  
+    }  
+
+    while (last->next != NULL)  
+      last = last->next;  
+  
+    last->next = newNode;  
+    return;  
+}  
 
 // check if character in string is duplicated
 bool duplicate(int index, std::string &fileIn)
@@ -136,48 +178,68 @@ std::string newlineToEOL(std::string &fileIn)
 }
 
 // send message to server and receive code
-void *serverCall(void *listRef)
+void *serverCall(void *headRef)
 {
-  struct Data *list = (struct Data *) listRef;
-  // std::cout << "index:\t" << list->index << std::endl;
-  // std::cout << "flag:\t" << list->flag << std::endl;
-  // std::cout << "char:\t" << list->sym << std::endl;
-  // std::cout << "msg:\t" << list->message << std::endl;
-  // list->code = generateCode(list->message, list->sym);
-  // std::cout << "code:\t" << list->code << std::endl;
+  std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
+  struct Data *head = (struct Data *) headRef;
+  while (true)
+  {
+    if (head->flag == 0)
+    {
+      std::cout << "\nHead created:\t" << &head << std::endl;
+      std::cout << "index:\t" << head->index << std::endl;
+      std::cout << "flag:\t" << head->flag << std::endl;
+      std::cout << "size:\t" << head->size << std::endl;
+      std::cout << "char:\t" << head->sym << std::endl;
+      std::cout << "msg:\t" << head->message << std::endl;
+      std::string code = generateCode(head->message, head->sym);
+      for (int i = 0; i < head->size; i++)
+      {
+        head->code[i] = code[i];
+      }
+      std::cout << "code:\t" << head->code << std::endl;
+      head->flag = 1;
+      return NULL;
+    }
+    else if (head->flag == 1)
+    {
+      if (head->next == NULL)
+        return NULL;
+      head = head->next;
+    }
+  }
+  // exit(0);
 
 
 	return NULL;
 }
 
 // creates threads to compress symbols to binary
-void compression(std::string &fileIn, std::vector<char> &sym, Data *list)
+void populateList(std::string &fileIn, std::vector<char> &sym, Data **head)
 {
+  std::cout << "\nHead passed to populate:\t" << &head << std::endl;
+
   if (fileIn.empty()) // exit function if string is empty
     return;
-  // pthread_t tid[sym.size()];
   for (int i = 0; i < sym.size(); i++)
   {
-    list[i].index = i;
-    list[i].flag = 0;
-    list[i].sym = sym[i];
-    list[i].message = fileIn;
-    list[i].code = fileIn;
-    
-    // serverCall((void *)&list[i]);
-    
-    // create thread
-    if (pthread_create(&tid[i], NULL, serverCall, (void *) &list[i]))
-    {
-      fprintf(stderr, "Error creating thread.\n");
-      exit(1);
-    }
-
-      
-    	
-    removeChar(sym[i], fileIn); // remove character that was coded by child process
+    append(head, i, 0, fileIn.length(), sym[i], fileIn);
+    removeChar(sym[i], fileIn); 
   }
-  pthread_exit(NULL);
+
+  std::cout << "\nPrinting populate list\n";
+  Data *temp = *head;
+  for (int i = 0; i < sym.size(); i++)
+  {
+    std::cout << "index:\t" << temp->index << std::endl;
+    std::cout << "flag:\t" << temp->flag << std::endl;
+    std::cout << "size:\t" << temp->size << std::endl;
+    std::cout << "char:\t" << temp->sym << std::endl;
+    std::cout << "msg:\t" << temp->message << std::endl;
+    std::cout << "code:\t" << temp->code << std::endl;
+    temp = temp->next;
+  }
+  return;
 }
 
 // prints the vectors
@@ -194,29 +256,31 @@ void printVectors(std::vector<char> &sym, std::vector<int> &cnt)
 }
 
 // print message and code from linked list
-void printList(std::vector<char> sym, Data *list)
+void printList(std::vector<char> sym, Data *head)
 {
-  Data *node = NULL;
+  Data *node = head;
   for (int i = 0; i < sym.size(); i++)
-  {     
+  { 
+    std::string str(node->message);    
     if (i == 0)
-      std::cout << "Original Message:\t" << list[i].message << std::endl;
+      std::cout << "Original Message:\t" << newlineToEOL(str) << std::endl;
     else
-      std::cout << "Remaining Message:\t" << list[i].message << std::endl;
+      std::cout << "Remaining Message:\t" << newlineToEOL(str) << std::endl;
 
     if (sym[i] == '\n')
-      std::cout << "Symbol <EOL> code:\t" << list[i].code << std::endl;
+      std::cout << "Symbol <EOL> code:\t" << node->code << std::endl;
     else
-      std::cout << "Symbol " << sym[i] << " code:\t\t" << list[i].code << std::endl;
+      std::cout << "Symbol " << sym[i] << " code:\t\t" << node->code << std::endl;
+    node = node->next;
   }
   return;
 }
 
 // calls printing functions
-void printCompression(std::vector<char> &sym, std::vector<int> &cnt, Data *list)
+void printCompression(std::vector<char> &sym, std::vector<int> &cnt, Data *head)
 {
   printVectors(sym, cnt);
-  printList(sym, list);
+  printList(sym, head);
   return;
 }
 
@@ -244,18 +308,54 @@ int main(int argc, char *argv[])
   sortVectors(symbol, count);
 
   // start linked list for data
-  // static struct Data *head = NULL;
-  // std::cout << "Head address 1:\t" << &head << std::endl;
-  // std::cout << "Head address 1:\t" << head << std::endl;
-  struct Data list[symbol.size()];
+  static struct Data *head = NULL;
+  std::cout << "\nHead init:\t" << &head << std::endl;
+  // std::cout << "Head init:\t" << head << std::endl;
+  // std::cout << "Head init next:\t" << &head->next << std::endl;
 
   // perform symbol compression
   std::cout << "compression" << std::endl;
-  compression(fileIn, symbol, list);
+  populateList(fileIn, symbol, &head);
+
+  // create thread
+  pthread_t tid[symbol.size()];
+  for (int i = 0; i < symbol.size(); i++)
+  {
+    if (pthread_create(&tid[i], NULL, serverCall, head))
+    {
+      fprintf(stderr, "Error creating thread.\n");
+      exit(1);
+    }
+  }
+
+
+  // std::cout << "\nHead after populate:\t" << &head << std::endl;
+  // std::cout << "Head after populate:\t" << head << std::endl;
+  // std::cout << "Head after populate next:\t" << head->next << std::endl;
+  // std::cout << "index:\t" << head->index << std::endl;
+  // std::cout << "flag:\t" << head->flag << std::endl;
+  // std::cout << "size:\t" << head->size << std::endl;
+  // std::cout << "char:\t" << head->sym << std::endl;
+  // std::cout << "msg:\t" << head->message << std::endl;
+  // std::cout << "code:\t" << head->code << std::endl;
+  // for (int i = 0; i < symbol.size(); i++)
+  // {
+  //   serverCall(head);
+  // }
+  
+  // std::cout << "\nHead after server call:\t" << &head << std::endl;
+  // std::cout << "Head after populate:\t" << head << std::endl;
+  // std::cout << "Head after populate next:\t" << head->next << std::endl;
+  // std::cout << "index:\t" << head->index << std::endl;
+  // std::cout << "flag:\t" << head->flag << std::endl;
+  // std::cout << "size:\t" << head->size << std::endl;
+  // std::cout << "char:\t" << head->sym << std::endl;
+  // std::cout << "msg:\t" << head->message << std::endl;
+  // std::cout << "code:\t" << head->code << std::endl;
 
   // print compression steps
-  std::cout << "print compression" << std::endl;
-  printCompression(symbol, count, list);
+  std::cout << "\n\n\nprint compression" << std::endl;
+  printCompression(symbol, count, head);
 
 
   return 0;
