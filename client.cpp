@@ -214,16 +214,16 @@ void *serverCall(void *headRef)
           server->h_length);
       serv_addr.sin_port = htons(portNum);
       if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
-        error("ERROR connecting");
+        std::cout << "ERROR connecting\n";
       bzero(buffer, head->size + 1);
       buffer = head->sym + head->message;
       n = write(sockfd, buffer, strlen(buffer));
       if (n < 0) 
-          error("ERROR writing to socket");
+          std::cout << "ERROR writing to socket\n";
       bzero(buffer, head->size);
       n = read(sockfd,buffer,255);
       if (n < 0) 
-          error("ERROR reading from socket");
+          std::cout << "ERROR reading from socket\n";
       printf("%s\n",buffer);
 
 
