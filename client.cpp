@@ -193,8 +193,8 @@ void *serverCall(void *headRef)
       std::string code = generateCode(head->message, head->sym);
       
       int sockfd, n;
-      struct sockaddr_in serv_addr;
-      struct hostent *server;
+      struct sockaddr_in serv_addr = new sockaddr_in();
+      struct hostent *server = new hostent();
       char *buffer;
 
       sockfd = socket(AF_INET, SOCK_STREAM, 0);
