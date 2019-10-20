@@ -181,25 +181,24 @@ std::string newlineToEOL(std::string &fileIn)
 // send message to server and receive code
 void *serverCall(void *headRef)
 {
-  // std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
+   std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
   struct Data *head = (struct Data *) headRef;
-  std::cout << "thread num:\t" << head->index << std::endl;
   while (true)
   {
     if (head->flag == 0)
     {
-      // std::cout << "\nHead created:\t" << &head << std::endl;
-      // std::cout << "index:\t" << head->index << std::endl;
-      // std::cout << "flag:\t" << head->flag << std::endl;
-      // std::cout << "size:\t" << head->size << std::endl;
-      // std::cout << "char:\t" << head->sym << std::endl;
-      // std::cout << "msg:\t" << head->message << std::endl;
+       std::cout << "\nHead created:\t" << &head << std::endl;
+       std::cout << "index:\t" << head->index << std::endl;
+       std::cout << "flag:\t" << head->flag << std::endl;
+       std::cout << "size:\t" << head->size << std::endl;
+       std::cout << "char:\t" << head->sym << std::endl;
+       std::cout << "msg:\t" << head->message << std::endl;
       std::string code = generateCode(head->message, head->sym);
       for (int i = 0; i < head->size; i++)
       {
         head->code[i] = code[i];
       }
-      // std::cout << "code:\t" << head->code << std::endl;
+       std::cout << "code:\t" << head->code << std::endl;
       head->flag = 1;
       return NULL;
     }
@@ -317,6 +316,10 @@ int main(int argc, char *argv[])
 
   // create thread
   pthread_t tid[symbol.size()];
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  void *status;
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   for (int i = 0; i < symbol.size(); i++)
   {
     if (pthread_create(&tid[i], NULL, serverCall, head))
@@ -324,10 +327,19 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Error creating thread.\n");
       exit(1);
     }
+    //sleep(1);
   }
-  pthread_exit(NULL);
-  wait(1);
-
+  pthread_attr_destroy(&attr);
+  for (int i = 0; i < symbol.size(); i++ )
+  {
+    if (pthread_join(tid[i], &status)) 
+    {
+      std::cout << "Error:unable to join thread" << std::endl;
+      exit(-1);
+    }
+    std::cout << "Main: completed thread id :" << i ;
+    std::cout << "  exiting with status :" << status << std::endl;
+   }
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
   // std::cout << "Head after populate:\t" << head << std::endl;
@@ -355,6 +367,7 @@ int main(int argc, char *argv[])
 
   // print compression steps
   std::cout << "\n\n\nprint compression" << std::endl;
+  
   printCompression(symbol, count, head);
 
 
