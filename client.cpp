@@ -9,7 +9,7 @@
 #include <netdb.h> 
 
 unsigned int portNum;
-std::string ipAddress;
+char *ipAddress;
 
 struct Data
 {
@@ -199,7 +199,7 @@ void *serverCall(void *headRef)
 
       sockfd = socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd < 0) 
-        error("ERROR opening socket");
+        std::cout << "ERROR opening socket\n";
       server = gethostbyname(ipAddress);
       if (server == NULL)
       {
