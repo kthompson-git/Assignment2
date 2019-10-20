@@ -2,7 +2,6 @@
 #include <iostream>
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/wait.h>
 #include <pthread.h>
 
 struct Data
@@ -13,15 +12,12 @@ struct Data
     int size;
     char sym;
     char message[1000];
-    // std::string message;
     char code[1000];
-    // std::string code;
     Data *next;
 };
 
 void append(Data** headRef, int i, int flag, int size, char sym, std::string msg)  
 {  
-    std::cout << "In append\n";
     Data *newNode = new Data(); 
   
     Data *last = *headRef; 
@@ -36,13 +32,6 @@ void append(Data** headRef, int i, int flag, int size, char sym, std::string msg
       newNode->code[j] = msg[j]; 
     }
     newNode->next = NULL; 
-
-    // std::cout << "index:\t" << newNode->index << std::endl;
-    // std::cout << "flag:\t" << newNode->flag << std::endl;
-    // std::cout << "size:\t" << newNode->size << std::endl;
-    // std::cout << "char:\t" << newNode->sym << std::endl;
-    // std::cout << "msg:\t" << newNode->message << std::endl; 
-    // std::cout << "code:\t" << newNode->code << std::endl;
 
     if (*headRef == NULL)  
     {  
@@ -181,24 +170,24 @@ std::string newlineToEOL(std::string &fileIn)
 // send message to server and receive code
 void *serverCall(void *headRef)
 {
-   std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
+  //  std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
   struct Data *head = (struct Data *) headRef;
   while (true)
   {
     if (head->flag == 0)
     {
-       std::cout << "\nHead created:\t" << &head << std::endl;
-       std::cout << "index:\t" << head->index << std::endl;
-       std::cout << "flag:\t" << head->flag << std::endl;
-       std::cout << "size:\t" << head->size << std::endl;
-       std::cout << "char:\t" << head->sym << std::endl;
-       std::cout << "msg:\t" << head->message << std::endl;
+      //  std::cout << "\nHead created:\t" << &head << std::endl;
+      //  std::cout << "index:\t" << head->index << std::endl;
+      //  std::cout << "flag:\t" << head->flag << std::endl;
+      //  std::cout << "size:\t" << head->size << std::endl;
+      //  std::cout << "char:\t" << head->sym << std::endl;
+      //  std::cout << "msg:\t" << head->message << std::endl;
       std::string code = generateCode(head->message, head->sym);
       for (int i = 0; i < head->size; i++)
       {
         head->code[i] = code[i];
       }
-       std::cout << "code:\t" << head->code << std::endl;
+      //  std::cout << "code:\t" << head->code << std::endl;
       head->flag = 1;
       return NULL;
     }
@@ -306,12 +295,12 @@ int main(int argc, char *argv[])
 
   // start linked list for data
   static struct Data *head = NULL;
-  std::cout << "\nHead init:\t" << &head << std::endl;
+  // std::cout << "\nHead init:\t" << &head << std::endl;
   // std::cout << "Head init:\t" << head << std::endl;
   // std::cout << "Head init next:\t" << &head->next << std::endl;
 
   // perform symbol compression
-  std::cout << "compression" << std::endl;
+  // std::cout << "compression" << std::endl;
   populateList(fileIn, symbol, &head);
 
   // create thread
@@ -337,8 +326,8 @@ int main(int argc, char *argv[])
       std::cout << "Error:unable to join thread" << std::endl;
       exit(-1);
     }
-    std::cout << "Main: completed thread id :" << i ;
-    std::cout << "  exiting with status :" << status << std::endl;
+    // std::cout << "Main: completed thread id :" << i ;
+    // std::cout << "  exiting with status :" << status << std::endl;
    }
 
   // std::cout << "\nHead after populate:\t" << &head << std::endl;
@@ -366,7 +355,7 @@ int main(int argc, char *argv[])
   // std::cout << "code:\t" << head->code << std::endl;
 
   // print compression steps
-  std::cout << "\n\n\nprint compression" << std::endl;
+  // std::cout << "\n\n\nprint compression" << std::endl;
   
   printCompression(symbol, count, head);
 
