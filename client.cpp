@@ -8,9 +8,11 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 
+// set port and ip address as global
 unsigned int portNum;
 char *ipAddress;
 
+// structure for linked list
 struct Data
 {
 	public:
@@ -23,34 +25,35 @@ struct Data
     Data *next;
 };
 
-void append(Data** headRef, int i, int flag, int size, char sym, std::string msg)  
-{  
-    Data *newNode = new Data(); 
-  
-    Data *last = *headRef; 
-  
-    newNode->index = i; 
-    newNode->flag = flag;
-    newNode->size = size;
-    newNode->sym = sym;
-    for (int j = 0; j < size; j++)
-    {
-      newNode->message[j] = msg[j];
-      newNode->code[j] = msg[j]; 
-    }
-    newNode->next = NULL; 
+// append new node to end of linked list
+void append(Data** head, int i, int flag, int size, char sym, std::string msg)  
+{      
+  Data *newNode = new Data(); // create new node
+  Data *tail = *head; // set tail reference
 
-    if (*headRef == NULL)  
-    {  
-      *headRef = newNode; 
-      return;  
-    }  
+  // enter new node data
+  newNode->index = i; 
+  newNode->flag = flag;
+  newNode->size = size;
+  newNode->sym = sym;
+  for (int j = 0; j < size; j++)
+  {
+    newNode->message[j] = msg[j];
+    newNode->code[j] = msg[j]; 
+  }
+  newNode->next = NULL; // set next to NULL for end of list
 
-    while (last->next != NULL)  
-      last = last->next;  
-  
-    last->next = newNode;  
+  if (*head == NULL) // set new node to head if no head
+  {  
+    *head = newNode; 
     return;  
+  }  
+
+  while (tail->next != NULL) // cycle through list to tail node
+    tail = tail->next;  
+
+  tail->next = newNode; // set new node as tail of list
+  return;  
 }  
 
 // check if character in string is duplicated
@@ -147,19 +150,6 @@ void removeChar(char sym, std::string &str)
   return;
 }
 
-std::string generateCode (std::string fileIn, char sym)
-{
-  std::string code;
-  for (int i = 0; i < fileIn.length(); i++)
-  {
-    if (fileIn[i] == sym)
-      code.append("1");
-    else
-      code.append("0");
-  }
-  return code;
-}
-
 // changes all newline characters to <EOL>
 std::string newlineToEOL(std::string &fileIn)
 {
@@ -177,85 +167,64 @@ std::string newlineToEOL(std::string &fileIn)
 // send message to server and receive code
 void *serverCall(void *headRef)
 {
-  //  std::cout << "\nHead Ref passed to server:\t" << headRef << std::endl;
   struct Data *head = (struct Data *) headRef;
   while (true)
   {
     if (head->flag == 0)
     {
-      head->flag = 1;
-        std::cout << "\nHead created:\t" << &head << std::endl;
-        std::cout << "index:\t" << head->index << std::endl;
-        std::cout << "flag:\t" << head->flag << std::endl;
-        std::cout << "size:\t" << head->size << std::endl;
-        std::cout << "char:\t" << head->sym << std::endl;
-        std::cout << "msg:\t" << head->message << std::endl;
-      std::string code = generateCode(head->message, head->sym);
-      std::cout << "\n\nInitializing variables\n";
+      head->flag = 1;   
       int sockfd, n;
       struct sockaddr_in serv_addr;
       struct hostent *server;
-      char *buffer;
-      std::cout << "Creating socket\n";
+      char buffer[256];
       sockfd = socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd < 0) 
         std::cout << "ERROR opening socket\n";
-      std::cout << "Setting host name\n";
       server = gethostbyname(ipAddress);
       if (server == NULL)
       {
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
       }
-      std::cout << "Setting serv_addr fields\n";
       bzero((char *) &serv_addr, sizeof(serv_addr));
       serv_addr.sin_family = AF_INET;
       bcopy((char *)server->h_addr, 
           (char *)&serv_addr.sin_addr.s_addr,
           server->h_length);
       serv_addr.sin_port = htons(portNum);
-      std::cout << "Establishing connection to server\n";
       if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
         std::cout << "ERROR connecting\n";
-      std::cout << "Setting buffer size\n";
-      bzero(buffer, head->size + 1);
-      std::cout << "Added character and message into buffer\n";
-      buffer = head->sym + head->message;
-      std::cout << "Buffer:\t" << buffer << std::endl;
-      std::cout << "Writing message to socket\n";
+      bzero(buffer, 256);
+      buffer[0] = head->sym;
+      for (int i = 0; i < head->size; i++)
+      {
+        buffer[i+1] = head->message[i];
+      }
       n = write(sockfd, buffer, strlen(buffer));
       if (n < 0) 
           std::cout << "ERROR writing to socket\n";
-      bzero(buffer, head->size);
-      std::cout << "Reading message from socket\n";
+      bzero(buffer, 256);
       n = read(sockfd,buffer,255);
       if (n < 0) 
           std::cout << "ERROR reading from socket\n";
-      printf("%s\n",buffer);
-
-
       for (int i = 0; i < head->size; i++)
       {
-        head->code[i] = code[i];
+        head->code[i] = buffer[i];
       }
-       // std::cout << "code:\t" << head->code << std::endl << std::endl;
       return NULL;
     }
     else if (head->flag == 1)
     {
       if (head->next == NULL)
         return NULL;
-      //std::cout << "\nmoving to next node\n";
       head = head->next;
     }
   }
 }
 
-// creates threads to compress symbols to binary
+// populate linked lists
 void populateList(std::string &fileIn, std::vector<char> &sym, Data **head)
 {
-  // std::cout << "\nHead passed to populate:\t" << &head << std::endl;
-
   if (fileIn.empty()) // exit function if string is empty
     return;
   for (int i = 0; i < sym.size(); i++)
@@ -263,19 +232,6 @@ void populateList(std::string &fileIn, std::vector<char> &sym, Data **head)
     append(head, i, 0, fileIn.length(), sym[i], fileIn);
     removeChar(sym[i], fileIn); 
   }
-
-  // std::cout << "\nPrinting populate list\n";
-  // Data *temp = *head;
-  // for (int i = 0; i < sym.size(); i++)
-  // {
-  //   std::cout << "index:\t" << temp->index << std::endl;
-  //   std::cout << "flag:\t" << temp->flag << std::endl;
-  //   std::cout << "size:\t" << temp->size << std::endl;
-  //   std::cout << "char:\t" << temp->sym << std::endl;
-  //   std::cout << "msg:\t" << temp->message << std::endl;
-  //   std::cout << "code:\t" << temp->code << std::endl;
-  //   temp = temp->next;
-  // }
   return;
 }
 
@@ -285,9 +241,9 @@ void printVectors(std::vector<char> &sym, std::vector<int> &cnt)
   for (int i = 0; i < sym.size(); i++)
   {
     if (sym[i] == '\n') // special case for newline character
-      std::cout << "<EOL> frequency = " << cnt[i] << std::endl;
+      printf("<EOL> frequency = %d\n", cnt[i]);
     else
-      std::cout << sym[i] << " frequency = " << cnt[i] << std::endl;
+      printf("%c frequency = %d\n", sym[i], cnt[i]);
   }
   return;
 }
@@ -332,9 +288,6 @@ int main(int argc, char *argv[])
   portNum = atoi(argv[2]);
   ipAddress = argv[1];
 
-  std::cout << "Port:\t" << portNum << std::endl;
-  std::cout << "IP:\t" << ipAddress << std::endl;
-
   // string for file input
   std::string fileIn; 
   std::getline(std::cin, fileIn, '\0');
@@ -351,15 +304,11 @@ int main(int argc, char *argv[])
 
   // start linked list for data
   static struct Data *head = NULL;
-  // std::cout << "\nHead init:\t" << &head << std::endl;
-  // std::cout << "Head init:\t" << head << std::endl;
-  // std::cout << "Head init next:\t" << &head->next << std::endl;
 
-  // perform symbol compression
-  std::cout << "populate list" << std::endl;
+  // create linked list
   populateList(fileIn, symbol, &head);
 
-  // // create thread
+  // create thread
   pthread_t tid[symbol.size()];
   pthread_attr_t attr;
   pthread_attr_init(&attr);
@@ -372,7 +321,6 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Error creating thread.\n");
       exit(1);
     }
-    //sleep(1);
   }
   pthread_attr_destroy(&attr);
   for (int i = 0; i < symbol.size(); i++ )
@@ -382,36 +330,7 @@ int main(int argc, char *argv[])
       std::cout << "Error:unable to join thread" << std::endl;
       exit(-1);
     }
-     //std::cout << "Main: completed thread id :" << i ;
-     //std::cout << "  exiting with status :" << status << std::endl;
-   }
-
-  // std::cout << "\nHead after populate:\t" << &head << std::endl;
-  // std::cout << "Head after populate:\t" << head << std::endl;
-  // std::cout << "Head after populate next:\t" << head->next << std::endl;
-  // std::cout << "index:\t" << head->index << std::endl;
-  // std::cout << "flag:\t" << head->flag << std::endl;
-  // std::cout << "size:\t" << head->size << std::endl;
-  // std::cout << "char:\t" << head->sym << std::endl;
-  // std::cout << "msg:\t" << head->message << std::endl;
-  // std::cout << "code:\t" << head->code << std::endl;
-  // for (int i = 0; i < symbol.size(); i++)
-  // {
-  //   serverCall(head);
-  // }
-  
-  // std::cout << "\nHead after server call:\t" << &head << std::endl;
-  // std::cout << "Head after populate:\t" << head << std::endl;
-  // std::cout << "Head after populate next:\t" << head->next << std::endl;
-  // std::cout << "index:\t" << head->index << std::endl;
-  // std::cout << "flag:\t" << head->flag << std::endl;
-  // std::cout << "size:\t" << head->size << std::endl;
-  // std::cout << "char:\t" << head->sym << std::endl;
-  // std::cout << "msg:\t" << head->message << std::endl;
-  // std::cout << "code:\t" << head->code << std::endl;
-
-  // print compression steps
-  // std::cout << "\n\n\nprint compression" << std::endl;
+  }
   
   printCompression(symbol, count, head);
 
