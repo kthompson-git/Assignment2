@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
       n = read(newsockfd, buffer, 255);
       if (n < 0) 
         printf("ERROR reading from socket");
-      printf("Here is the message: %s\n", buffer);    
       std::string msg = buffer;
       bzero(buffer, 256);
       msg = generateCode(msg, msg[0]);
