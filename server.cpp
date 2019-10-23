@@ -10,6 +10,8 @@
 #include <netinet/in.h>
 #include <sys/wait.h>
 
+
+// create coded message based on character
 std::string generateCode (std::string fileIn, char sym)
 {
   std::string code;
@@ -21,6 +23,12 @@ std::string generateCode (std::string fileIn, char sym)
       code.append("0");
   }
   return code;
+}
+
+void fireman(int)
+{
+   while (waitpid(-1, NULL, WNOHANG) > 0)
+      std::cout << "A child process ended" << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -47,6 +55,7 @@ int main(int argc, char *argv[])
     printf("ERROR on binding");
   listen(sockfd, 5);
   clilen = sizeof(cli_addr);
+  signal(SIGCHLD, fireman);
   while (1) 
   {
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t *)&clilen);
@@ -77,7 +86,6 @@ int main(int argc, char *argv[])
     else
     {
       close(newsockfd);
-      signal(SIGCHLD,SIG_IGN);
     }    
   }
   return 0; 
